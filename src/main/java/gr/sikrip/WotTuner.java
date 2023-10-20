@@ -202,14 +202,14 @@ public class WotTuner {
 
     private static void printUsage() {
         System.out.println("Usage:");
-        System.out.println("java -jar wot-tuner.jar <ecu file1> <ecu file2> ...\n");
+        System.out.println("java -jar wot-tuner.jar <ecu file path>\n");
     }
 
     private static void printVersion() {
         try {
             final Properties properties = new Properties();
             properties.load(WotTuner.class.getClassLoader().getResourceAsStream("project.properties"));
-            System.out.printf("vbo-merger version %s\n", properties.getProperty("version"));
+            System.out.printf("wot-tuner version %s\n", properties.getProperty("version"));
         } catch (IOException e) {
             // ignore
         }
