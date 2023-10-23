@@ -27,6 +27,7 @@ public class WotTuner {
     private static int fuelTableSize;
     private static Integer[] rpmLabels;
     private static Integer[] loadLabels;
+    private static String separator;
     private static String timeHeader;
     private static String rpmHeader;
     private static String afrHeader;
@@ -188,6 +189,7 @@ public class WotTuner {
             .toArray(Integer[]::new);
 
         fuelTableSize = Integer.parseInt(properties.getProperty("fuelTableSize"));
+        separator = properties.getProperty("separator");
         timeHeader = properties.getProperty("timeHeader");
         rpmHeader = properties.getProperty("rpmHeader");
         afrHeader = properties.getProperty("afrHeader");
@@ -253,7 +255,8 @@ public class WotTuner {
         final AtomicInteger mapPIdx = new AtomicInteger();
         final AtomicBoolean headerCreated = new AtomicBoolean(false);
         Files.lines(Paths.get(filePath)).forEach(line -> {
-            final List<String> values = Arrays.asList(line.split(","));
+            final List<String> values = Arrays.stream(line.split(separator))
+                .map(String::trim).collect(Collectors.toList());
             if (headerCreated.get()) {
                 logData.add(
                     LogEntry.builder()
