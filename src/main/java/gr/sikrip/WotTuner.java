@@ -28,6 +28,7 @@ public class WotTuner {
     private static Integer[] rpmLabels;
     private static Integer[] loadLabels;
     private static String separator;
+    private static int linesToSkip;
     private static String timeHeader;
     private static String rpmHeader;
     private static String afrHeader;
@@ -79,8 +80,8 @@ public class WotTuner {
             if (underWOT) {
                 if (logEntry.timeSeconds - wotStart >= accelEnrichSeconds) {
                     // fuel enrichment done
-                    int col = logEntry.mapP - 1;
-                    int row = logEntry.mapN - 1;
+                    int col = logEntry.mapP;
+                    int row = logEntry.mapN;
                     final double currentAvgSum =
                         loggedAfr[col][row] * loggedAfrSample[col][row];
                     loggedAfrSample[col][row]++;
@@ -100,7 +101,7 @@ public class WotTuner {
                 if (j==0) {
                     printMapP_Value(i);
                 }
-                if (loggedAfrSample[i][j] > minNumberOfSamples) {
+                if (loggedAfrSample[i][j] >= minNumberOfSamples) {
                     System.out.printf(DECIMAL_FORMAT, loggedAfr[i][j]);
                 } else {
                     System.out.printf(DECIMAL_FORMAT, 0.0);
@@ -114,7 +115,7 @@ public class WotTuner {
         final double[][] newFuelMap = new double[fuelTableSize][fuelTableSize];
         for (int i = 0; i < loggedAfr.length; i++) {
             for (int j = 0; j < loggedAfr[i].length; j++) {
-                if (loggedAfrSample[i][j] > minNumberOfSamples) {
+                if (loggedAfrSample[i][j] >= minNumberOfSamples) {
                     final double newFuelValue = (loggedAfr[i][j] / wotTargetAfr) * currentFuelMap[i][j];
                     newFuelMap[i][j] = newFuelValue;
                 } else {
@@ -167,7 +168,8 @@ public class WotTuner {
     }
 
     private static void printMapN_Values() {
-        System.out.print("\t\t");
+        // each MAPP is 9 chars long
+        System.out.print("         ");
         for(int j = 0; j < fuelTableSize; j++) {
             System.out.printf("%6d", rpmLabels[j]);
             if (j < fuelTableSize -1) {
@@ -190,6 +192,7 @@ public class WotTuner {
 
         fuelTableSize = Integer.parseInt(properties.getProperty("fuelTableSize"));
         separator = properties.getProperty("separator");
+        linesToSkip = Integer.parseInt(properties.getProperty("linesToSkip"));
         timeHeader = properties.getProperty("timeHeader");
         rpmHeader = properties.getProperty("rpmHeader");
         afrHeader = properties.getProperty("afrHeader");
@@ -247,6 +250,7 @@ public class WotTuner {
 
     private static List<LogEntry> readEcuLog(String filePath) throws IOException {
         final List<LogEntry> logData = new ArrayList<>();
+        final AtomicInteger linesCount = new AtomicInteger(0);
         final AtomicInteger timeIdx = new AtomicInteger();
         final AtomicInteger rpmIdx = new AtomicInteger();
         final AtomicInteger afrIdx = new AtomicInteger();
@@ -255,27 +259,29 @@ public class WotTuner {
         final AtomicInteger mapPIdx = new AtomicInteger();
         final AtomicBoolean headerCreated = new AtomicBoolean(false);
         Files.lines(Paths.get(filePath)).forEach(line -> {
-            final List<String> values = Arrays.stream(line.split(separator))
-                .map(String::trim).collect(Collectors.toList());
-            if (headerCreated.get()) {
-                logData.add(
-                    LogEntry.builder()
-                        .timeSeconds(Double.parseDouble(values.get(timeIdx.get())))
-                        .rpm(Integer.parseInt(values.get(rpmIdx.get())))
-                        .afr(Double.parseDouble(values.get(afrIdx.get())))
-                        .throttle(Double.parseDouble(values.get(throttleIdx.get())))
-                        .mapN(Integer.parseInt(values.get(mapNIdx.get())))
-                        .mapP(Integer.parseInt(values.get(mapPIdx.get())))
-                        .build()
-                );
-            } else {
-                timeIdx.set(values.indexOf(timeHeader));
-                rpmIdx.set(values.indexOf(rpmHeader));
-                afrIdx.set(values.indexOf(afrHeader));
-                throttleIdx.set(values.indexOf(throttleHeader));
-                mapNIdx.set(values.indexOf(rpmIdxHeader));
-                mapPIdx.set(values.indexOf(loadIdxHeader));
-                headerCreated.set(true);
+            if (linesCount.incrementAndGet() > linesToSkip) {
+                final List<String> values = Arrays.stream(line.split(separator))
+                    .map(String::trim).collect(Collectors.toList());
+                if (headerCreated.get()) {
+                    logData.add(
+                        LogEntry.builder()
+                            .timeSeconds(Double.parseDouble(values.get(timeIdx.get())))
+                            .rpm(Integer.parseInt(values.get(rpmIdx.get())))
+                            .afr(Double.parseDouble(values.get(afrIdx.get())))
+                            .throttle(Double.parseDouble(values.get(throttleIdx.get())))
+                            .mapN(Integer.parseInt(values.get(mapNIdx.get())))
+                            .mapP(Integer.parseInt(values.get(mapPIdx.get())))
+                            .build()
+                    );
+                } else {
+                    timeIdx.set(values.indexOf(timeHeader));
+                    rpmIdx.set(values.indexOf(rpmHeader));
+                    afrIdx.set(values.indexOf(afrHeader));
+                    throttleIdx.set(values.indexOf(throttleHeader));
+                    mapNIdx.set(values.indexOf(rpmIdxHeader));
+                    mapPIdx.set(values.indexOf(loadIdxHeader));
+                    headerCreated.set(true);
+                }
             }
         });
         return logData;
