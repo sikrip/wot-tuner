@@ -11,8 +11,8 @@ import java.util.Properties;
  */
 public class App {
 
-    public static final String WOT_MODE = "wot";
-    public static final String CRUISE_MODE = "cruise";
+    public static final String WOT_MODE = "w";
+    public static final String CRUISE_MODE = "c";
 
     public static void main(String[] args) throws IOException {
         printVersion();
@@ -42,7 +42,10 @@ public class App {
 
     private static void printUsage() {
         System.out.println("Usage:");
-        System.out.println("java -jar wot-tuner.jar cruise|wot <ecu file path>\n");
+        System.out.printf(
+            "java -jar wot-tuner.jar %s|%s <ecu file path>\n",
+            CRUISE_MODE, WOT_MODE
+        );
     }
 
     private static void printVersion() {

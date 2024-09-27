@@ -30,7 +30,9 @@ public class EcuDataHandler {
     static String rpmIdxHeader;
     static String loadIdxHeader;
     static double wotVolts;
-    static double minTuneThrottleVolts;
+    static double minCruiseThrottleVolts;
+    static double maxCruiseThrottleVolts;
+    static double maxCruiseRpm;
     static double maxTuneVoltChange;
     static double accelEnrichSeconds;
     static int minNumberOfSamples;
@@ -79,7 +81,9 @@ public class EcuDataHandler {
         minNumberOfSamples = Integer.parseInt(properties.getProperty("minNumberOfSamples"));
         wotTargetAfr = Double.parseDouble(properties.getProperty("wotTargetAfr"));
         cruiseTargetAfr = Double.parseDouble(properties.getProperty("cruiseTargetAfr"));
-        minTuneThrottleVolts = Double.parseDouble(properties.getProperty("minTuneThrottleVolts"));
+        minCruiseThrottleVolts = Double.parseDouble(properties.getProperty("minCruiseThrottleVolts"));
+        maxCruiseThrottleVolts = Double.parseDouble(properties.getProperty("maxCruiseThrottleVolts"));
+        maxCruiseRpm = Double.parseDouble(properties.getProperty("maxCruiseRpm"));
         maxTuneVoltChange = Double.parseDouble(properties.getProperty("maxTuneVoltChange"));
     }
 

@@ -1,19 +1,11 @@
 package gr.sikrip;
 
-import static gr.sikrip.EcuDataHandler.cruiseTargetAfr;
-import static gr.sikrip.EcuDataHandler.fuelTableSize;
-import static gr.sikrip.EcuDataHandler.maxTuneVoltChange;
-import static gr.sikrip.EcuDataHandler.minNumberOfSamples;
-import static gr.sikrip.EcuDataHandler.minTuneThrottleVolts;
-import static gr.sikrip.EcuDataHandler.printMapN_Values;
-import static gr.sikrip.EcuDataHandler.printMapP_Value;
-import static gr.sikrip.EcuDataHandler.readEcuLog;
-import static gr.sikrip.EcuDataHandler.readFuelMap;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+
+import static gr.sikrip.EcuDataHandler.*;
 
 /**
  * Given a csv log from PowerTune, creates a new base fuel map
@@ -43,10 +35,7 @@ class CruiseTuner {
                 lastThrottleVolt = logEntry.getThrottle();
                 continue;
             }
-            final boolean underThrottle = logEntry.getThrottle() >= minTuneThrottleVolts;
-            final double voltChangePerSecond = (logEntry.getThrottle() - lastThrottleVolt) / (logEntry.getTimeSeconds() - lastLoggedTime);
-            if (underThrottle && voltChangePerSecond <= maxTuneVoltChange) {
-                // under throttle && no accel enrich
+            if (isCruiseConditions(logEntry, lastThrottleVolt, lastLoggedTime)) {
                 int col = logEntry.getMapP();
                 int row = logEntry.getMapN();
                 final double currentAvgSum = loggedAfr[col][row] * loggedAfrSample[col][row];
@@ -124,5 +113,32 @@ class CruiseTuner {
             }
             System.out.println();
         }
+    }
+
+    private static boolean isCruiseConditions(LogEntry logEntry,
+                                              double lastThrottleVolt,
+                                              double lastLoggedTime) {
+        if (logEntry.getThrottle() < minCruiseThrottleVolts) {
+            // not under throttle
+            return false;
+        }
+
+        if (logEntry.getThrottle() > maxCruiseThrottleVolts) {
+            // too much throttle for cruise
+            return false;
+        }
+
+        if (logEntry.getRpm() > maxCruiseRpm) {
+            // too much RPM for cruise
+            return false;
+        }
+
+        final double voltChangePerSecond = (logEntry.getThrottle() - lastThrottleVolt) / (logEntry.getTimeSeconds() - lastLoggedTime);
+        if (voltChangePerSecond > maxTuneVoltChange) {
+            // accel enrich
+            return false;
+        }
+
+        return true;
     }
 }
