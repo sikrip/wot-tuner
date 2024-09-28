@@ -26,10 +26,12 @@ public class EcuDataHandler {
     static String timeHeader;
     static String rpmHeader;
     static String afrHeader;
+    static String waterTempHeader;
     static String throttleHeader;
     static String rpmIdxHeader;
     static String loadIdxHeader;
     static double wotVolts;
+    static double minWaterTemp;
     static double minCruiseThrottleVolts;
     static double maxCruiseThrottleVolts;
     static double maxCruiseRpm;
@@ -72,11 +74,13 @@ public class EcuDataHandler {
         linesToSkip = Integer.parseInt(properties.getProperty("linesToSkip"));
         timeHeader = properties.getProperty("timeHeader");
         rpmHeader = properties.getProperty("rpmHeader");
+        waterTempHeader = properties.getProperty("waterTempHeader");
         afrHeader = properties.getProperty("afrHeader");
         throttleHeader = properties.getProperty("throttleHeader");
         rpmIdxHeader = properties.getProperty("rpmIdxHeader");
         loadIdxHeader = properties.getProperty("loadIdxHeader");
         wotVolts = Double.parseDouble(properties.getProperty("wotVolt"));
+        minWaterTemp = Double.parseDouble(properties.getProperty("minWaterTemp"));
         accelEnrichSeconds = Double.parseDouble(properties.getProperty("accelEnrichSeconds"));
         minNumberOfSamples = Integer.parseInt(properties.getProperty("minNumberOfSamples"));
         wotTargetAfr = Double.parseDouble(properties.getProperty("wotTargetAfr"));
@@ -93,6 +97,7 @@ public class EcuDataHandler {
         final AtomicInteger timeIdx = new AtomicInteger();
         final AtomicInteger rpmIdx = new AtomicInteger();
         final AtomicInteger afrIdx = new AtomicInteger();
+        final AtomicInteger waterTempIdx = new AtomicInteger();
         final AtomicInteger throttleIdx = new AtomicInteger();
         final AtomicInteger mapNIdx = new AtomicInteger();
         final AtomicInteger mapPIdx = new AtomicInteger();
@@ -107,6 +112,7 @@ public class EcuDataHandler {
                             .timeSeconds(Double.parseDouble(values.get(timeIdx.get())))
                             .rpm(Integer.parseInt(values.get(rpmIdx.get())))
                             .afr(Double.parseDouble(values.get(afrIdx.get())))
+                            .waterTemp(Double.parseDouble(values.get(waterTempIdx.get())))
                             .throttle(Double.parseDouble(values.get(throttleIdx.get())))
                             .mapN(Integer.parseInt(values.get(mapNIdx.get())))
                             .mapP(Integer.parseInt(values.get(mapPIdx.get())))
@@ -116,6 +122,7 @@ public class EcuDataHandler {
                     timeIdx.set(values.indexOf(timeHeader));
                     rpmIdx.set(values.indexOf(rpmHeader));
                     afrIdx.set(values.indexOf(afrHeader));
+                    waterTempIdx.set(values.indexOf(waterTempHeader));
                     throttleIdx.set(values.indexOf(throttleHeader));
                     mapNIdx.set(values.indexOf(rpmIdxHeader));
                     mapPIdx.set(values.indexOf(loadIdxHeader));

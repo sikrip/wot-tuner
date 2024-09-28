@@ -12,6 +12,7 @@ import lombok.ToString;
 @Getter
 public  class LogEntry {
     private double timeSeconds;
+    private double waterTemp;
     private int rpm;
     private double afr;
     private double throttle;

@@ -133,6 +133,11 @@ class CruiseTuner {
             return false;
         }
 
+        if (logEntry.getWaterTemp() < minWaterTemp) {
+            // water temp too low
+            return false;
+        }
+
         final double voltChangePerSecond = (logEntry.getThrottle() - lastThrottleVolt) / (logEntry.getTimeSeconds() - lastLoggedTime);
         if (voltChangePerSecond > maxTuneVoltChange) {
             // accel enrich
