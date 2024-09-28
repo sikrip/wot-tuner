@@ -17,30 +17,31 @@ class CruiseTuner {
     private static final String DECIMAL_FORMAT_AFR = "%6.2f";
     private static final String NEW_FUEL_MAP_FILE = "./new-fuel.map";
 
-    static void tune(String ecuFilePath) throws IOException {
+    static void tune(String... ecuLogFilePaths) throws IOException {
         final double[][] currentFuelMap = readFuelMap();
         if (currentFuelMap == null) {
             return;
         }
-        System.out.printf("\nAnalyzing %s...\n", ecuFilePath);
-        final List<LogEntry> logEntries = readEcuLog(ecuFilePath);
         final double[][] loggedAfr = new double[fuelTableSize][fuelTableSize];
         final int[][] loggedAfrSample = new int[fuelTableSize][fuelTableSize];
-
-        double lastLoggedTime = -1;
-        double lastThrottleVolt = -1;
-        for (final LogEntry logEntry : logEntries) {
-            if (lastLoggedTime == -1) {
-                lastLoggedTime = logEntry.getTimeSeconds();
-                lastThrottleVolt = logEntry.getThrottle();
-                continue;
-            }
-            if (isCruiseConditions(logEntry, lastThrottleVolt, lastLoggedTime)) {
-                int col = logEntry.getMapP();
-                int row = logEntry.getMapN();
-                final double currentAvgSum = loggedAfr[col][row] * loggedAfrSample[col][row];
-                loggedAfrSample[col][row]++;
-                loggedAfr[col][row] = (currentAvgSum + logEntry.getAfr()) / loggedAfrSample[col][row];
+        for (String ecuLogFilePath : ecuLogFilePaths) {
+            System.out.printf("\nAnalyzing %s...\n", ecuLogFilePath);
+            final List<LogEntry> logEntries = readEcuLog(ecuLogFilePath);
+            double lastLoggedTime = -1;
+            double lastThrottleVolt = -1;
+            for (final LogEntry logEntry : logEntries) {
+                if (lastLoggedTime == -1) {
+                    lastLoggedTime = logEntry.getTimeSeconds();
+                    lastThrottleVolt = logEntry.getThrottle();
+                    continue;
+                }
+                if (isCruiseConditions(logEntry, lastThrottleVolt, lastLoggedTime)) {
+                    int col = logEntry.getMapP();
+                    int row = logEntry.getMapN();
+                    final double currentAvgSum = loggedAfr[col][row] * loggedAfrSample[col][row];
+                    loggedAfrSample[col][row]++;
+                    loggedAfr[col][row] = (currentAvgSum + logEntry.getAfr()) / loggedAfrSample[col][row];
+                }
             }
         }
 

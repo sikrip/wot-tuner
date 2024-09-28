@@ -24,43 +24,45 @@ class WotTuner {
     private static final String DECIMAL_FORMAT = "%6.3f";
     private static final String NEW_FUEL_MAP_FILE = "./new-fuel.map";
 
-    static void tune(String ecuFilePath) throws IOException {
+    static void tune(String... ecuLogPaths) throws IOException {
         final double[][] currentFuelMap = readFuelMap();
         if (currentFuelMap == null) {
             return;
         }
-        System.out.printf("\nAnalyzing %s...\n", ecuFilePath);
-        final List<LogEntry> logEntries = readEcuLog(ecuFilePath);
         final double[][] loggedAfr = new double[fuelTableSize][fuelTableSize];
         final int[][] loggedAfrSample = new int[fuelTableSize][fuelTableSize];
-        double wotStart = 0;
-        boolean underWOT = false;
-        for (final LogEntry logEntry : logEntries) {
-            final boolean underWotNow = logEntry.getThrottle() >= wotVolts;
-            if (underWotNow) {
-                if (!underWOT) {
-                    // Start of wot
-                    wotStart = logEntry.getTimeSeconds();
-                    underWOT = true;
+        for (String ecuLogPath : ecuLogPaths) {
+            System.out.printf("\nAnalyzing %s...\n", ecuLogPath);
+            final List<LogEntry> logEntries = readEcuLog(ecuLogPath);
+            double wotStart = 0;
+            boolean underWOT = false;
+            for (final LogEntry logEntry : logEntries) {
+                final boolean underWotNow = logEntry.getThrottle() >= wotVolts;
+                if (underWotNow) {
+                    if (!underWOT) {
+                        // Start of wot
+                        wotStart = logEntry.getTimeSeconds();
+                        underWOT = true;
+                    }
+                } else {
+                    // End of wot
+                    wotStart = 0;
+                    underWOT = false;
                 }
-            } else {
-                // End of wot
-                wotStart = 0;
-                underWOT = false;
-            }
-            if (underWOT) {
-                if (logEntry.getTimeSeconds() - wotStart >= accelEnrichSeconds) {
-                    // fuel enrichment done
-                    int col = logEntry.getMapP();
-                    int row = logEntry.getMapN();
-                    final double currentAvgSum =
-                        loggedAfr[col][row] * loggedAfrSample[col][row];
-                    loggedAfrSample[col][row]++;
-                    loggedAfr[col][row] =
-                        (currentAvgSum + logEntry.getAfr()) / loggedAfrSample[col][row];
+                if (underWOT) {
+                    if (logEntry.getTimeSeconds() - wotStart >= accelEnrichSeconds) {
+                        // fuel enrichment done
+                        int col = logEntry.getMapP();
+                        int row = logEntry.getMapN();
+                        final double currentAvgSum =
+                                loggedAfr[col][row] * loggedAfrSample[col][row];
+                        loggedAfrSample[col][row]++;
+                        loggedAfr[col][row] =
+                                (currentAvgSum + logEntry.getAfr()) / loggedAfrSample[col][row];
+                    }
                 }
-            }
 
+            }
         }
 
         System.out.println("\n========= Logged AFR ===========");
